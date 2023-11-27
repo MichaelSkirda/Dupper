@@ -60,14 +60,37 @@ namespace Dupper
 				transaction: transaction);
 		}
 
+		public static async Task<T?> QueryFirstOrDefaultAsync<T>
+			(this IDbProvider db, string sql, object? param = null, IDbTransaction? transaction = null)
+		{
+			using IDbConnection connection = db.Connect();
+			return await connection.QueryFirstOrDefaultAsync<T>(
+				sql,
+				param: param,
+				transaction: transaction);
+		}
+
 		public static async Task<IEnumerable<TOne>> OneToManyAsync<TKey, TOne, TMany>
-			(this IDbProvider db, string sql, Func<TOne, TKey> getKey, Action<TOne, TMany> addMany, string splitOn = "Id",
-			object? param = null, IDbTransaction? transaction = null)
+			(this IDbProvider db, string sql, Func<TOne, TKey> getKey, Action<TOne, TMany> addMany,
+			string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
 			where TKey : notnull
 		{
 			using IDbConnection connection = db.Connect();
+			return await OneToManyAsync<TKey, TOne, TMany>(
+				connection,
+				sql,
+				getKey,
+				addMany,
+				splitOn: splitOn,
+				param: param,
+				transaction: transaction);
+		}
 
-
+		public static async Task<IEnumerable<TOne>> OneToManyAsync<TKey, TOne, TMany>
+			(this IDbConnection connection, string sql, Func<TOne, TKey> getKey, Action<TOne, TMany> addMany,
+			string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
+			where TKey : notnull
+		{
 			var rows = new Dictionary<TKey, TOne>();
 
 			await connection.QueryAsync<TOne, TMany, TOne>(sql,
@@ -97,7 +120,18 @@ namespace Dupper
 			(this IDbProvider db, string sql, Action<TOne, TMany> addMany, string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
+			return await OneToManyFirstAsync(
+				connection,
+				sql,
+				addMany,
+				splitOn: splitOn,
+				param: param,
+				transaction: transaction);
+		}
 
+		public static async Task<TOne?> OneToManyFirstAsync<TOne, TMany>
+			(this IDbConnection connection, string sql, Action<TOne, TMany> addMany, string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
+		{
 			TOne? one = default;
 
 			await connection.QueryAsync<TOne, TMany, TOne>(sql,
@@ -117,14 +151,5 @@ namespace Dupper
 			return one;
 		}
 
-		public static async Task<T?> QueryFirstOrDefaultAsync<T>
-			(this IDbProvider db, string sql, object? param = null, IDbTransaction? transaction = null)
-		{
-			using IDbConnection connection = db.Connect();
-			return await connection.QueryFirstOrDefaultAsync<T>(
-				sql,
-				param: param,
-				transaction: transaction);
-		}
 	}
 }
