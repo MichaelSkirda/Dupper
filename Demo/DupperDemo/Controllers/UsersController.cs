@@ -8,10 +8,10 @@ namespace DupperDemo.Controllers
 {
 	public class UsersController : Controller
 	{
-		private IDupperProvider Db { get; set; }
+		private IDbProvider Db { get; set; }
 		private IDbConnectionProvider DbConnectionProvider { get; set; }
 
-		public UsersController(IDupperProvider db, IDbConnectionProvider dbProvider)
+		public UsersController(IDbProvider db, IDbConnectionProvider dbProvider)
 		{
 			Db = db;
 			DbConnectionProvider = dbProvider;
@@ -22,11 +22,7 @@ namespace DupperDemo.Controllers
 		{
 			string sql = "SELECT u.id, u.name, c.id AS comment_id, c.text FROM users u JOIN comments c ON c.user_id = u.id";
 
-			IEnumerable<User> users = await Db.OneToManyAsync<int, User, Comment>(
-				sql,
-				key: user => user.Id,
-				(user, comment) => user.Comments.Add(comment),
-				splitOn: "text");
+			int users = await Db.QueryFirstOrDefaultAsync<int>(sql);
 
 			return Json(users);
 		}
