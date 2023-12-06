@@ -1,4 +1,6 @@
-﻿using System.Data;
+﻿#nullable enable
+using System;
+using System.Data;
 
 namespace Dupper
 {
