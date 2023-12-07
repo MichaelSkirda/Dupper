@@ -2,9 +2,12 @@
 
 namespace Dupper
 {
-	public interface IDbProvider
+	public interface IDbProvider<T>
+		where T : class, IDbConnection
 	{
-		IDbConnection Connect();
-		IDbConnection Connect(string connectionString);
+		T Connect();
+		T Connect(string connectionString);
 	}
+
+	public interface IDbProvider: IDbProvider<IDbConnection> { }
 }

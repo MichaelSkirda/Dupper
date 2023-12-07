@@ -3,95 +3,70 @@ using System.Data;
 
 namespace Dupper
 {
-	public class DbProvider : IDbProvider
+	public class DbProvider<T> : IDbProvider<T>
+		where T : class, IDbConnection
 	{
 		private string? ConnectionString { get; set; }
-		private Func<IDbConnection>? DbConnectionProvider { get; set; }
-		private Func<string, IDbConnection>? DbConnectionFactory { get; set; }
+		private Func<T>? DbConnectionProvider { get; set; }
+		private Func<string, T>? DbConnectionFactory { get; set; }
 
-		public DbProvider(Func<IDbConnection> dbConnectionProvider)
+		public DbProvider(Func<T> dbConnectionProvider)
 		{
 			DbConnectionProvider = dbConnectionProvider;
 		}
 
-		public DbProvider(Func<string, IDbConnection> dbConnectionFactory)
+		public DbProvider(Func<string, T> dbConnectionFactory)
 		{
 			DbConnectionFactory = dbConnectionFactory;
 		}
 
-		public DbProvider(string connectionString, Func<string, IDbConnection> dbConnectionFactory)
+		public DbProvider(string connectionString, Func<string, T> dbConnectionFactory)
 		{
 			ConnectionString = connectionString;
 			DbConnectionFactory = dbConnectionFactory;
 		}
 
-		public DbProvider(string connectionString, Func<string, IDbConnection> dbConnectionFactory,
-			Func<IDbConnection> dbConnectionProvider)
+		public DbProvider(string connectionString, Func<string, T> dbConnectionFactory,
+			Func<T> dbConnectionProvider)
 		{
 			ConnectionString = connectionString;
 			DbConnectionFactory = dbConnectionFactory;
 			DbConnectionProvider = dbConnectionProvider;
 		}
 
-
-		public IDbConnection Connect()
+		public T Connect()
 		{
 			if (DbConnectionProvider == null)
 			{
-				if(DbConnectionFactory == null || ConnectionString == null)
-					throw new InvalidOperationException(NitherProviderNorFactoryMessage);
+				if (DbConnectionFactory == null || ConnectionString == null)
+					throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactoryMessage);
 
 				return DbConnectionFactory(ConnectionString);
 			}
 			return DbConnectionProvider();
 		}
 
-		public T Connect<T>()
-			where T : class, IDbConnection
-		{
-			IDbConnection abstractConnection = Connect();
-			T connection = Convert<T>(abstractConnection);
-			return connection;
-		}
-
-
-		public IDbConnection Connect(string connectionString)
+		public T Connect(string connectionString)
 		{
 			if (DbConnectionFactory == null)
-				throw new InvalidOperationException(NoFactoryMessage);
+				throw new InvalidOperationException(ExceptionMessages.NoFactoryMessage);
 			return DbConnectionFactory(connectionString);
 		}
+	}
 
-		public T Connect<T>(string connectionString)
-			where T : class, IDbConnection
-		{
-			IDbConnection abstractConnection = Connect(connectionString);
-			T connection = Convert<T>(abstractConnection);
-			return connection;
-		}
+	public class DbProvider : DbProvider<IDbConnection>
+	{
+		public DbProvider(Func<IDbConnection> dbConnectionProvider)
+			: base(dbConnectionProvider) { }
 
+		public DbProvider(Func<string, IDbConnection> dbConnectionFactory)
+			: base(dbConnectionFactory) { }
 
-		private T Convert<T>(IDbConnection abstractConnection)
-			where T : class, IDbConnection
-		{
-			T? connection = abstractConnection as T;
+		public DbProvider(string connectionString, Func<string, IDbConnection> dbConnectionFactory)
+			: base(connectionString, dbConnectionFactory) { }
 
-			if (connection == null)
-				throw new InvalidOperationException($"Can not convert {abstractConnection.GetType()} to {typeof(T)}");
-			return connection;
-		}
-
-
-		private static string NitherProviderNorFactoryMessage =
-			"Nither DbConnectionProvider nor (DbConnectionFactory with ConnectionString) not provided." +
-			"Use constructor (Func<IDbConnection>)" + 
-			"or (string, Func<string, IDbConnection>) " + 
-			"or (string, Func<string, IDbConnection>, Func<IDbConnection>)";
-
-		private static string NoFactoryMessage =
-			"DbConnectionFactory not provided. " +
-			"Use constructor (string, Func<string, IDbConnection>) " +
-			"or (string, Func<string, IDbConnection>, Func<IDbConnection>)" +
-			"or (Func<string, IDbConnection>)";
+		public DbProvider(string connectionString, Func<string, IDbConnection> dbConnectionFactory,
+			Func<IDbConnection> dbConnectionProvider)
+			: base(connectionString, dbConnectionFactory, dbConnectionProvider) { }
 	}
 }
