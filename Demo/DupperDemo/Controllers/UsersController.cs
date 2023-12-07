@@ -1,66 +1,30 @@
 ﻿using Dapper;
 using Dupper;
-using DupperDemo.Models;
-using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 using System.Data;
+using System.Data.Common;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DupperDemo.Controllers
 {
-	public class UsersController : Controller
+	public class UsersController
 	{
 		private IDbProvider Db { get; set; }
-		private IDbConnectionProvider DbConnectionProvider { get; set; }
 
-		public UsersController(IDbProvider db, IDbConnectionProvider dbProvider)
+		public UsersController(IDbProvider db)
 		{
 			Db = db;
-			DbConnectionProvider = dbProvider;
 		}
 
-		[HttpGet("users/dupper")]
-		public async Task<IActionResult> ListDupper()
+		public async Task ListDupper()
 		{
 			string sql = "SELECT u.id, u.name, c.id AS comment_id, c.text FROM users u JOIN comments c ON c.user_id = u.id";
 
-			int users = await Db.QueryFirstOrDefaultAsync<int>(sql);
-
-			return Json(users);
+			IDbConnection x = new NpgsqlConnection();
+			var y = x.QueryFirstOrDefaultAsync<int>("");
+			StringBuilder users = await Db.QueryFirstOrDefaultAsync<StringBuilder>(sql);
 		}
 
-		[HttpGet("users/dapper")]
-		public async Task<IActionResult> ListDapper()
-		{
-			string sql = "SELECT u.id, u.name, c.id AS comment_id, c.text FROM users u JOIN comments c ON c.user_id = u.id";
-
-			using IDbConnection connection = DbConnectionProvider.Connect();
-			var rows = new Dictionary<int, User>();
-
-			await connection.QueryAsync<User, Comment, User>(sql,
-			(userRow, commentRow) =>
-			{
-				int key = userRow.Id;
-				User? user = default!;
-				rows.TryGetValue(key, out user);
-
-				if (user == null)
-				{
-					user = userRow;
-					rows[key] = user;
-				}
-				user.Comments.Add(commentRow);
-
-				return user;
-			}, splitOn: "text");
-
-			IEnumerable<User> users = rows
-				.Select(x => new User()
-				{ 
-					Id = x.Value.Id,
-					Name = x.Value.Name,
-					Comments = x.Value.Comments
-				});
-
-			return Json(users);
-		}
 	}
 }
