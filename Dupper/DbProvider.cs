@@ -46,11 +46,39 @@ namespace Dupper
 			return DbConnectionProvider();
 		}
 
+		public T Connect<T>()
+			where T : class, IDbConnection
+		{
+			IDbConnection abstractConnection = Connect();
+			T connection = Convert<T>(abstractConnection);
+			return connection;
+		}
+
+
 		public IDbConnection Connect(string connectionString)
 		{
 			if (DbConnectionFactory == null)
 				throw new InvalidOperationException(NoFactoryMessage);
 			return DbConnectionFactory(connectionString);
+		}
+
+		public T Connect<T>(string connectionString)
+			where T : class, IDbConnection
+		{
+			IDbConnection abstractConnection = Connect(connectionString);
+			T connection = Convert<T>(abstractConnection);
+			return connection;
+		}
+
+
+		private T Convert<T>(IDbConnection abstractConnection)
+			where T : class, IDbConnection
+		{
+			T? connection = abstractConnection as T;
+
+			if (connection == null)
+				throw new InvalidOperationException($"Can not convert {abstractConnection.GetType()} to {typeof(T)}");
+			return connection;
 		}
 
 
