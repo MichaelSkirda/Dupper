@@ -9,6 +9,16 @@ namespace Dupper
 		private string? ConnectionString { get; set; }
 		private Func<T>? DbConnectionProvider { get; set; }
 		private Func<string, T>? DbConnectionFactory { get; set; }
+		private T? _connection;
+		public T Connection
+		{
+			get
+			{
+				if (_connection == null)
+					_connection = Connect();
+				return _connection;
+			}
+		}
 
 		public DbProvider(Func<T> dbConnectionProvider)
 		{
@@ -36,14 +46,13 @@ namespace Dupper
 
 		public T Connect()
 		{
-			if (DbConnectionProvider == null)
-			{
-				if (DbConnectionFactory == null || ConnectionString == null)
-					throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactoryMessage);
+			if (DbConnectionProvider != null)
+				return DbConnectionProvider();
 
+			if (DbConnectionFactory != null && ConnectionString != null)
 				return DbConnectionFactory(ConnectionString);
-			}
-			return DbConnectionProvider();
+
+			throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactoryMessage);
 		}
 
 		public T Connect(string connectionString)
