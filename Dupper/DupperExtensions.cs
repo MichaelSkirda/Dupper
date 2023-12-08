@@ -120,11 +120,11 @@ namespace Dupper
 			return rows.Select(x => x.Value);
 		}
 
-		public static async Task<TOne?> OneToManyFirstAsync<TOne, TMany>
+		public static async Task<TOne?> OneToManyFirstOrDefaultAsync<TOne, TMany>
 			(this IDbProvider db, string sql, Action<TOne, TMany> addMany, string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
-			return await OneToManyFirstAsync(
+			return await OneToManyFirstOrDefaultAsync(
 				connection,
 				sql,
 				addMany,
@@ -133,7 +133,7 @@ namespace Dupper
 				transaction: transaction);
 		}
 
-		public static async Task<TOne?> OneToManyFirstAsync<TOne, TMany>
+		public static async Task<TOne?> OneToManyFirstOrDefaultAsync<TOne, TMany>
 			(this IDbConnection connection, string sql, Action<TOne, TMany> addMany, string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
 		{
 			TOne? one = default;
