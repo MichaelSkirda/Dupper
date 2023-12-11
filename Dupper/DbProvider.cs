@@ -63,7 +63,7 @@ namespace Dupper
 		}
 	}
 
-	public class DbProvider : DbProvider<IDbConnection>
+	public class DbProvider : DbProvider<IDbConnection>, IDbProvider
 	{
 		public DbProvider(Func<IDbConnection> dbConnectionProvider)
 			: base(dbConnectionProvider) { }
