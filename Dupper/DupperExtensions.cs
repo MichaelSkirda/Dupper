@@ -9,7 +9,7 @@ namespace Dupper
 {
 	public static class DupperExtensions
 	{
-		public static async Task<int> ExecuteAsync(this IDbProvider db, string sql, object? param = null,
+		public static async Task<int> ExecuteAsync(this IDbProvider<IDbConnection> db, string sql, object? param = null,
 			IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
@@ -19,7 +19,7 @@ namespace Dupper
 				transaction: transaction);
 		}
 
-		public static async Task<T?> ExecuteScalarAsync<T>(this IDbProvider db, string sql, object? param = null,
+		public static async Task<T?> ExecuteScalarAsync<T>(this IDbProvider<IDbConnection> db, string sql, object? param = null,
 			IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
@@ -29,7 +29,7 @@ namespace Dupper
 				transaction: transaction);
 		}
 
-		public static async Task<T> QueryFirstAsync<T>(this IDbProvider db, string sql, object? param = null,
+		public static async Task<T> QueryFirstAsync<T>(this IDbProvider<IDbConnection> db, string sql, object? param = null,
 			IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
@@ -39,7 +39,7 @@ namespace Dupper
 				transaction: transaction);
 		}
 
-		public static async Task<IEnumerable<T>> QueryAsync<T>(this IDbProvider db, string sql,
+		public static async Task<IEnumerable<T>> QueryAsync<T>(this IDbProvider<IDbConnection> db, string sql,
 			object? param = null, IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
@@ -51,7 +51,7 @@ namespace Dupper
 		}
 
 		public static async Task<IEnumerable<TReturn>> QueryAsync<TFirst, TSecond, TReturn>
-			(this IDbProvider db, string sql, Func<TFirst, TSecond, TReturn> map, object? param,
+			(this IDbProvider<IDbConnection> db, string sql, Func<TFirst, TSecond, TReturn> map, object? param,
 			IDbTransaction? transaction = null, string splitOn = "Id")
 		{
 			using IDbConnection connection = db.Connect();
@@ -65,7 +65,7 @@ namespace Dupper
 		}
 
 		public static async Task<T?> QueryFirstOrDefaultAsync<T>
-			(this IDbProvider db, string sql, object? param = null, IDbTransaction? transaction = null)
+			(this IDbProvider<IDbConnection> db, string sql, object? param = null, IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
 			return await connection.QueryFirstOrDefaultAsync<T>(
@@ -75,7 +75,7 @@ namespace Dupper
 		}
 
 		public static async Task<IEnumerable<TOne>> OneToManyAsync<TKey, TOne, TMany>
-			(this IDbProvider db, string sql, Func<TOne, TKey> getKey, Action<TOne, TMany> addMany,
+			(this IDbProvider<IDbConnection> db, string sql, Func<TOne, TKey> getKey, Action<TOne, TMany> addMany,
 			string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
 			where TKey : notnull
 		{
@@ -121,7 +121,7 @@ namespace Dupper
 		}
 
 		public static async Task<TOne?> OneToManyFirstOrDefaultAsync<TOne, TMany>
-			(this IDbProvider db, string sql, Action<TOne, TMany> addMany, string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
+			(this IDbProvider<IDbConnection> db, string sql, Action<TOne, TMany> addMany, string splitOn = "Id", object? param = null, IDbTransaction? transaction = null)
 		{
 			using IDbConnection connection = db.Connect();
 			return await OneToManyFirstOrDefaultAsync(
