@@ -29,6 +29,18 @@ namespace Dupper
 				transaction: transaction);
 		}
 
+		public static async Task<T> QuerySingleAsync<T>(this IDbProvider<IDbConnection> db, string sql, object? param = null,
+			IDbTransaction? transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+		{
+			using IDbConnection connection = db.Connect();
+			return await connection.QuerySingleAsync<T>(
+				sql: sql,
+				param: param,
+				transaction: transaction,
+				commandTimeout: commandTimeout,
+				commandType: commandType);
+		}
+
 		public static async Task<T> QueryFirstAsync<T>(this IDbProvider<IDbConnection> db, string sql, object? param = null,
 			IDbTransaction? transaction = null)
 		{
