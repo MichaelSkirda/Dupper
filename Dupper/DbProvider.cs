@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading;
 
@@ -11,12 +12,26 @@ namespace Dupper
 		private Func<T>? DbConnectionProvider { get; set; }
 		private Func<string, T>? DbConnectionFactory { get; set; }
 
-		public IDbTransaction? Transaction { get; private set; }
+		public IDbTransaction? Transaction
+		{
+			get
+			{
+				try
+				{
+					return Transactions?.Peek();
+				}
+				catch
+				{
+					return null;
+				}
+			}
+		}
+		private Stack<IDbTransaction?> Transactions { get; set; } = new Stack<IDbTransaction?>();
 		private T? _connection;
-		public T Connection => Connect();
+		public T? Connection => _connection;
 
 		private Mutex Mutex { get; set; } = new Mutex();
-		public int MutexMillisecondsTimeout { get; set; }
+		private int MutexMillisecondsTimeout { get; set; } = 5000;
 
 
 
@@ -115,15 +130,28 @@ namespace Dupper
 
 		public void Dispose()
 		{
-			Transaction?.Dispose();
+			foreach(IDbTransaction? transaction in Transactions)
+			{
+				transaction?.Dispose();
+			}
 			_connection?.Dispose();
 		}
 
 		public IDbTransaction BeginTransaction()
-			=> Connect().BeginTransaction();
+		{
+			IDbConnection connection = Connect();
+			IDbTransaction transaction = connection.BeginTransaction();
+			Transactions.Push(transaction);
+			return transaction;
+		}
 
 		public IDbTransaction BeginTransaction(IsolationLevel il)
-			=> Connect().BeginTransaction(il);
+		{
+			IDbConnection connection = Connect();
+			IDbTransaction transaction = connection.BeginTransaction(il);
+			Transactions.Push(transaction);
+			return transaction;
+		}
 	}
 
 	public class DbProvider : DbProvider<IDbConnection>, IDbProvider

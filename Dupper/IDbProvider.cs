@@ -6,6 +6,9 @@ namespace Dupper
 	public interface IDbProvider<out T> : IDisposable
 		where T : class, IDbConnection
 	{
+		IDbTransaction? Transaction { get; }
+		T? Connection { get; }
+
 		T Connect();
 		T Connect(string connectionString);
 		IDbTransaction BeginTransaction();
