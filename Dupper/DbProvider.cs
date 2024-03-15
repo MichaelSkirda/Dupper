@@ -50,13 +50,13 @@ namespace Dupper
 			if (_connection != null)
 				return _connection;
 
-			throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactoryMessage);
+			throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactory);
 		}
 
 		public T Connect(string connectionString)
 		{
 			if (DbConnectionFactory == null)
-				throw new InvalidOperationException(ExceptionMessages.NoFactoryMessage);
+				throw new InvalidOperationException(ExceptionMessages.NoFactory);
 			_connection = DbConnectionFactory(connectionString);
 			return _connection;
 		}
