@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Threading;
 
 namespace Dupper
 {
@@ -9,9 +10,14 @@ namespace Dupper
 		private string? ConnectionString { get; set; }
 		private Func<T>? DbConnectionProvider { get; set; }
 		private Func<string, T>? DbConnectionFactory { get; set; }
+
 		private T? _connection;
 		public T Connection => Connect();
-		
+
+		private Mutex Mutex { get; set; } = new Mutex();
+		public int MutexMillisecondsTimeout { get; set; }
+
+
 
 		public DbProvider(Func<T> dbConnectionProvider)
 		{
@@ -39,26 +45,71 @@ namespace Dupper
 
 		public T Connect()
 		{
-			if(_connection != null)
-				return _connection;
+			try
+			{
+				WaitMutex(MutexMillisecondsTimeout);
 
-			if (DbConnectionProvider != null)
-				_connection = DbConnectionProvider();
-			else if (DbConnectionFactory != null && ConnectionString != null)
-				_connection = DbConnectionFactory(ConnectionString);
+				if (_connection != null)
+					return _connection;
 
-			if (_connection != null)
-				return _connection;
+				if (DbConnectionProvider == null && (DbConnectionFactory == null || ConnectionString == null))
+					throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactory);
 
-			throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactory);
+				bool hasConnected = TryConnect();
+
+				if (hasConnected && _connection != null)
+					return _connection;
+
+				throw new InvalidOperationException(ExceptionMessages.FailedToCreateConnection);
+			}
+			finally
+			{
+				Mutex.ReleaseMutex();
+			}
 		}
 
 		public T Connect(string connectionString)
 		{
-			if (DbConnectionFactory == null)
-				throw new InvalidOperationException(ExceptionMessages.NoFactory);
-			_connection = DbConnectionFactory(connectionString);
-			return _connection;
+			try
+			{
+				WaitMutex(MutexMillisecondsTimeout);
+
+				if (DbConnectionFactory == null)
+					throw new InvalidOperationException(ExceptionMessages.NoFactory);
+
+				_connection = DbConnectionFactory(connectionString);
+
+				if (_connection == null)
+					throw new InvalidOperationException(ExceptionMessages.FailedToCreateConnection);
+
+				return _connection;
+			}
+			finally
+			{
+				Mutex.ReleaseMutex();
+			}
+		}
+
+		private void WaitMutex(int millisecondsTimeout)
+		{
+			bool getMutex = Mutex.WaitOne(millisecondsTimeout);
+			if (getMutex == false)
+				throw new InvalidOperationException(ExceptionMessages.FailedToGetMutex);
+		}
+
+		private bool TryConnect()
+		{
+			if (DbConnectionProvider != null)
+			{
+				_connection = DbConnectionProvider();
+				return true;
+			}
+			else if (DbConnectionFactory != null && ConnectionString != null)
+			{
+				_connection = DbConnectionFactory(ConnectionString);
+				return true;
+			}
+			return false;
 		}
 
 		public void Dispose()

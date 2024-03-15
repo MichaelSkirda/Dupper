@@ -13,5 +13,9 @@
 			"Use constructor (string, Func<string, IDbConnection>) " +
 			"or (string, Func<string, IDbConnection>, Func<IDbConnection>)" +
 			"or (Func<string, IDbConnection>)";
+
+		internal static string FailedToCreateConnection = "Failed to create connection.";
+
+		internal static string FailedToGetMutex = "Failed to get mutex.";
 	}
 }
