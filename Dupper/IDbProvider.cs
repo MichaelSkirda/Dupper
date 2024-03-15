@@ -3,7 +3,7 @@ using System.Data;
 
 namespace Dupper
 {
-	public interface IDbProvider<out T>
+	public interface IDbProvider<out T> : IDisposable
 		where T : class, IDbConnection
 	{
 		T Connect();

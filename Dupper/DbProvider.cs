@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Dupper
 {
-	public class DbProvider<T> : IDbProvider<T>, IDisposable
+	public class DbProvider<T> : IDbProvider<T>
 		where T : class, IDbConnection
 	{
 		private string? ConnectionString { get; set; }
