@@ -3,7 +3,7 @@ using System.Data;
 
 namespace Dupper
 {
-	public class DbProvider<T> : IDbProvider<T>
+	public class DbProvider<T> : IDbProvider<T>, IDisposable
 		where T : class, IDbConnection
 	{
 		private string? ConnectionString { get; set; }
@@ -60,6 +60,11 @@ namespace Dupper
 			if (DbConnectionFactory == null)
 				throw new InvalidOperationException(ExceptionMessages.NoFactoryMessage);
 			return DbConnectionFactory(connectionString);
+		}
+
+		public void Dispose()
+		{
+			_connection?.Dispose();
 		}
 	}
 

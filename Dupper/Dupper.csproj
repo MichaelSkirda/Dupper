@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 	<TargetFrameworks>net461;netstandard2.0;net5.0;net7.0</TargetFrameworks>
-    <Version>2.0.3</Version>
+    <Version>2.0.4</Version>
     <Title>Dupper</Title>
     <Description>Dupper mapper for dapper.</Description>
 	<LangVersion>9</LangVersion>
