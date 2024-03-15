@@ -10,15 +10,8 @@ namespace Dupper
 		private Func<T>? DbConnectionProvider { get; set; }
 		private Func<string, T>? DbConnectionFactory { get; set; }
 		private T? _connection;
-		public T Connection
-		{
-			get
-			{
-				if (_connection == null)
-					_connection = Connect();
-				return _connection;
-			}
-		}
+		public T Connection => Connect();
+		
 
 		public DbProvider(Func<T> dbConnectionProvider)
 		{
@@ -46,11 +39,16 @@ namespace Dupper
 
 		public T Connect()
 		{
-			if (DbConnectionProvider != null)
-				return DbConnectionProvider();
+			if(_connection != null)
+				return _connection;
 
-			if (DbConnectionFactory != null && ConnectionString != null)
-				return DbConnectionFactory(ConnectionString);
+			if (DbConnectionProvider != null)
+				_connection = DbConnectionProvider();
+			else if (DbConnectionFactory != null && ConnectionString != null)
+				_connection = DbConnectionFactory(ConnectionString);
+
+			if (_connection != null)
+				return _connection;
 
 			throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactoryMessage);
 		}
@@ -59,7 +57,8 @@ namespace Dupper
 		{
 			if (DbConnectionFactory == null)
 				throw new InvalidOperationException(ExceptionMessages.NoFactoryMessage);
-			return DbConnectionFactory(connectionString);
+			_connection = DbConnectionFactory(connectionString);
+			return _connection;
 		}
 
 		public void Dispose()
