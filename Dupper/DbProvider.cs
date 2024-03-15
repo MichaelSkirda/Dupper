@@ -11,6 +11,7 @@ namespace Dupper
 		private Func<T>? DbConnectionProvider { get; set; }
 		private Func<string, T>? DbConnectionFactory { get; set; }
 
+		public IDbTransaction? Transaction { get; private set; }
 		private T? _connection;
 		public T Connection => Connect();
 
@@ -114,8 +115,15 @@ namespace Dupper
 
 		public void Dispose()
 		{
+			Transaction?.Dispose();
 			_connection?.Dispose();
 		}
+
+		public IDbTransaction BeginTransaction()
+			=> Connect().BeginTransaction();
+
+		public IDbTransaction BeginTransaction(IsolationLevel il)
+			=> Connect().BeginTransaction(il);
 	}
 
 	public class DbProvider : DbProvider<IDbConnection>, IDbProvider

@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 
 namespace Dupper
 {
@@ -7,6 +8,8 @@ namespace Dupper
 	{
 		T Connect();
 		T Connect(string connectionString);
+		IDbTransaction BeginTransaction();
+		IDbTransaction BeginTransaction(IsolationLevel il);
 	}
 
 	public interface IDbProvider : IDbProvider<IDbConnection> { }
