@@ -100,17 +100,24 @@ namespace Dupper
 
 		private bool TryConnect()
 		{
-			if (DbConnectionProvider != null)
+			try
 			{
-				_connection = DbConnectionProvider();
-				return true;
+				if (DbConnectionProvider != null)
+				{
+					_connection = DbConnectionProvider();
+					return true;
+				}
+				else if (DbConnectionFactory != null && ConnectionString != null)
+				{
+					_connection = DbConnectionFactory(ConnectionString);
+					return true;
+				}
+				return false;
 			}
-			else if (DbConnectionFactory != null && ConnectionString != null)
+			catch
 			{
-				_connection = DbConnectionFactory(ConnectionString);
-				return true;
+				return false;
 			}
-			return false;
 		}
 
 		public void Dispose()
@@ -152,6 +159,15 @@ namespace Dupper
 			if (Transaction == null)
 				throw new InvalidOperationException(ExceptionMessages.NoStartedTransaction);
 			Transaction.Rollback();
+			Transaction = null;
+		}
+
+		public void ClearTransaction()
+		{
+			if (Transaction == null)
+				return;
+			try { Transaction.Dispose(); }
+			catch { }
 			Transaction = null;
 		}
 
