@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Threading;
 
@@ -12,21 +11,7 @@ namespace Dupper
 		private Func<T>? DbConnectionProvider { get; set; }
 		private Func<string, T>? DbConnectionFactory { get; set; }
 
-		public IDbTransaction? Transaction
-		{
-			get
-			{
-				try
-				{
-					return Transactions?.Peek();
-				}
-				catch
-				{
-					return null;
-				}
-			}
-		}
-		private Stack<IDbTransaction?> Transactions { get; set; } = new Stack<IDbTransaction?>();
+		public IDbTransaction? Transaction { get; private set; }
 		private T? _connection;
 		public T? Connection => _connection;
 
@@ -130,28 +115,46 @@ namespace Dupper
 
 		public void Dispose()
 		{
-			foreach(IDbTransaction? transaction in Transactions)
-			{
-				transaction?.Dispose();
-			}
+			Transaction?.Dispose();
 			_connection?.Dispose();
 		}
 
 		public IDbTransaction BeginTransaction()
 		{
+			if (Transaction != null)
+				throw new InvalidOperationException(ExceptionMessages.TransactionAlreadyStarted);
 			IDbConnection connection = Connect();
 			IDbTransaction transaction = connection.BeginTransaction();
-			Transactions.Push(transaction);
+			Transaction = transaction;
 			return transaction;
 		}
 
 		public IDbTransaction BeginTransaction(IsolationLevel il)
 		{
+			if (Transaction != null)
+				throw new InvalidOperationException(ExceptionMessages.TransactionAlreadyStarted);
 			IDbConnection connection = Connect();
 			IDbTransaction transaction = connection.BeginTransaction(il);
-			Transactions.Push(transaction);
+			Transaction = transaction;
 			return transaction;
 		}
+
+		public void CommitTransaction()
+		{
+			if (Transaction == null)
+				throw new InvalidOperationException(ExceptionMessages.NoStartedTransaction);
+			Transaction.Commit();
+			Transaction = null;
+		}
+
+		public void RollbackTransaction()
+		{
+			if (Transaction == null)
+				throw new InvalidOperationException(ExceptionMessages.NoStartedTransaction);
+			Transaction.Rollback();
+			Transaction = null;
+		}
+
 	}
 
 	public class DbProvider : DbProvider<IDbConnection>, IDbProvider

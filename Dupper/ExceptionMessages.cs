@@ -17,5 +17,7 @@
 		internal static string FailedToCreateConnection = "Failed to create connection.";
 
 		internal static string FailedToGetMutex = "Failed to get mutex.";
+		internal static string TransactionAlreadyStarted => "Transaction already started.";
+		internal static string NoStartedTransaction => "No running transaction was found.";
 	}
 }
