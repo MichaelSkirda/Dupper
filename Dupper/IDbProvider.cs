@@ -9,8 +9,9 @@ namespace Dupper
 		IDbTransaction? Transaction { get; }
 		T? Connection { get; }
 
-		T GetConnectionOrConnect();
-		T GetConnectionOrConnect(string connectionString);
+		T GetConnectionOrConnect(bool switchToNewConnection = false);
+		T Connect(string connectionString, bool switchToNewConnection = false);
+		T Connect(bool switchToNewConnection = false);
 		IDbTransaction BeginTransaction();
 		IDbTransaction BeginTransaction(IsolationLevel il);
 	}

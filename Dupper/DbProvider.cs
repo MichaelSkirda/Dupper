@@ -44,24 +44,31 @@ namespace Dupper
 			DbConnectionProvider = dbConnectionProvider;
 		}
 
-		public T GetConnectionOrConnect()
+		public T GetConnectionOrConnect(bool switchToNewConnection = false)
+		{
+			if (_connection != null)
+				return _connection;
+			return Connect(switchToNewConnection);
+		}
+
+		public T Connect(bool switchToNewConnection = false)
 		{
 			WaitMutex(MutexMillisecondsTimeout);
 
 			try
 			{
-				if (_connection != null)
-					return _connection;
-
 				if (DbConnectionProvider == null && (DbConnectionFactory == null || ConnectionString == null))
 					throw new InvalidOperationException(ExceptionMessages.NitherProviderNorFactory);
 
-				bool hasConnected = TryConnect();
+				T? connection = ConnectOrDefault();
 
-				if (hasConnected && _connection != null)
-					return _connection;
+				if (connection == null)
+					throw new InvalidOperationException(ExceptionMessages.FailedToCreateConnection);
 
-				throw new InvalidOperationException(ExceptionMessages.FailedToCreateConnection);
+				if (switchToNewConnection)
+					SwitchToNewConnection(connection);
+
+				return connection;
 			}
 			finally
 			{
@@ -69,7 +76,7 @@ namespace Dupper
 			}
 		}
 
-		public T GetConnectionOrConnect(string connectionString)
+		public T Connect(string connectionString, bool switchToNewConnection = false)
 		{
 			WaitMutex(MutexMillisecondsTimeout);
 
@@ -78,17 +85,26 @@ namespace Dupper
 				if (DbConnectionFactory == null)
 					throw new InvalidOperationException(ExceptionMessages.NoFactory);
 
-				_connection = DbConnectionFactory(connectionString);
+				T tempConn = DbConnectionFactory(connectionString);
 
-				if (_connection == null)
+				if (tempConn == null)
 					throw new InvalidOperationException(ExceptionMessages.FailedToCreateConnection);
 
-				return _connection;
+				if (switchToNewConnection)
+					SwitchToNewConnection(tempConn);
+
+				return tempConn;
 			}
 			finally
 			{
 				Mutex.ReleaseMutex();
 			}
+		}
+
+		private void SwitchToNewConnection(T connection)
+		{
+			_connection?.Dispose();
+			_connection = connection;
 		}
 
 		private void WaitMutex(int millisecondsTimeout)
@@ -98,25 +114,20 @@ namespace Dupper
 				throw new InvalidOperationException(ExceptionMessages.FailedToGetMutex);
 		}
 
-		private bool TryConnect()
+		private T? ConnectOrDefault()
 		{
 			try
 			{
 				if (DbConnectionProvider != null)
-				{
-					_connection = DbConnectionProvider();
-					return true;
-				}
+					return DbConnectionProvider();
 				else if (DbConnectionFactory != null && ConnectionString != null)
-				{
-					_connection = DbConnectionFactory(ConnectionString);
-					return true;
-				}
-				return false;
+					return DbConnectionFactory(ConnectionString);
+				else
+					return default;
 			}
 			catch
 			{
-				return false;
+				return default;
 			}
 		}
 
@@ -125,6 +136,8 @@ namespace Dupper
 			Transaction?.Dispose();
 			_connection?.Dispose();
 		}
+
+		#region Transactions
 
 		public IDbTransaction BeginTransaction()
 		{
@@ -168,6 +181,8 @@ namespace Dupper
 			catch { }
 			Transaction = null;
 		}
+
+		#endregion
 
 	}
 
