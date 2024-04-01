@@ -44,12 +44,12 @@ namespace Dupper
 			DbConnectionProvider = dbConnectionProvider;
 		}
 
-		public T Connect()
+		public T GetConnectionOrConnect()
 		{
+			WaitMutex(MutexMillisecondsTimeout);
+
 			try
 			{
-				WaitMutex(MutexMillisecondsTimeout);
-
 				if (_connection != null)
 					return _connection;
 
@@ -69,12 +69,12 @@ namespace Dupper
 			}
 		}
 
-		public T Connect(string connectionString)
+		public T GetConnectionOrConnect(string connectionString)
 		{
+			WaitMutex(MutexMillisecondsTimeout);
+
 			try
 			{
-				WaitMutex(MutexMillisecondsTimeout);
-
 				if (DbConnectionFactory == null)
 					throw new InvalidOperationException(ExceptionMessages.NoFactory);
 
@@ -130,7 +130,7 @@ namespace Dupper
 		{
 			if (Transaction != null)
 				throw new InvalidOperationException(ExceptionMessages.TransactionAlreadyStarted);
-			IDbConnection connection = Connect();
+			IDbConnection connection = GetConnectionOrConnect();
 			IDbTransaction transaction = connection.BeginTransaction();
 			Transaction = transaction;
 			return transaction;
@@ -140,7 +140,7 @@ namespace Dupper
 		{
 			if (Transaction != null)
 				throw new InvalidOperationException(ExceptionMessages.TransactionAlreadyStarted);
-			IDbConnection connection = Connect();
+			IDbConnection connection = GetConnectionOrConnect();
 			IDbTransaction transaction = connection.BeginTransaction(il);
 			Transaction = transaction;
 			return transaction;
@@ -164,9 +164,7 @@ namespace Dupper
 
 		public void ClearTransaction()
 		{
-			if (Transaction == null)
-				return;
-			try { Transaction.Dispose(); }
+			try { Transaction?.Dispose(); }
 			catch { }
 			Transaction = null;
 		}
