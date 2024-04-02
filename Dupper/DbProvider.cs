@@ -12,13 +12,12 @@ namespace Dupper
 		private Func<string, T>? DbConnectionFactory { get; set; }
 
 		public IDbTransaction? Transaction { get; private set; }
-		private T? _connection;
+		private T? _connection { get; set; }
 		public T? Connection => _connection;
 
 		private Mutex Mutex { get; set; } = new Mutex();
 		private int MutexMillisecondsTimeout { get; set; } = 5000;
-
-
+		private bool _preventDisposing = false;
 
 		public DbProvider(Func<T> dbConnectionProvider)
 		{
@@ -101,19 +100,6 @@ namespace Dupper
 			}
 		}
 
-		private void SwitchToNewConnection(T connection)
-		{
-			_connection?.Dispose();
-			_connection = connection;
-		}
-
-		private void WaitMutex(int millisecondsTimeout)
-		{
-			bool getMutex = Mutex.WaitOne(millisecondsTimeout);
-			if (getMutex == false)
-				throw new InvalidOperationException(ExceptionMessages.FailedToGetMutex);
-		}
-
 		private T? ConnectOrDefault()
 		{
 			try
@@ -131,11 +117,44 @@ namespace Dupper
 			}
 		}
 
+		private void SwitchToNewConnection(T connection)
+		{
+			_connection?.Dispose();
+			_connection = connection;
+		}
+
+		private void WaitMutex(int millisecondsTimeout)
+		{
+			bool getMutex = Mutex.WaitOne(millisecondsTimeout);
+			if (getMutex == false)
+				throw new InvalidOperationException(ExceptionMessages.FailedToGetMutex);
+		}
+
+		#region Dispose
+
+		public void PreventDisposing()
+			=> _preventDisposing = true;
+
 		public void Dispose()
 		{
+			DisposeResources();
+			GC.SuppressFinalize(this);
+		}
+
+		private void DisposeResources()
+		{
+			if (_preventDisposing)
+				return;
 			Transaction?.Dispose();
 			_connection?.Dispose();
 		}
+
+		~DbProvider()
+		{
+			DisposeResources();
+		}
+
+		#endregion
 
 		#region Transactions
 
