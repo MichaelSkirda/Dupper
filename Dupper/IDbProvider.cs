@@ -14,6 +14,8 @@ namespace Dupper
 		T Connect(bool switchToNewConnection = false);
 		IDbTransaction BeginTransaction();
 		IDbTransaction BeginTransaction(IsolationLevel il);
+		void CommitTransaction();
+		void RollbackTransaction();
 	}
 
 	public interface IDbProvider : IDbProvider<IDbConnection> { }

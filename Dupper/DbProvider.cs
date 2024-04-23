@@ -19,6 +19,7 @@ namespace Dupper
 		private int MutexMillisecondsTimeout { get; set; } = 5000;
 		private bool _preventDisposing = false;
 
+
 		public DbProvider(Func<T> dbConnectionProvider)
 		{
 			DbConnectionProvider = dbConnectionProvider;
@@ -42,6 +43,7 @@ namespace Dupper
 			DbConnectionFactory = dbConnectionFactory;
 			DbConnectionProvider = dbConnectionProvider;
 		}
+
 
 		public T GetConnectionOrConnect(bool switchToNewConnection = false)
 		{
@@ -191,13 +193,6 @@ namespace Dupper
 			if (Transaction == null)
 				throw new InvalidOperationException(ExceptionMessages.NoStartedTransaction);
 			Transaction.Rollback();
-			Transaction = null;
-		}
-
-		public void ClearTransaction()
-		{
-			try { Transaction?.Dispose(); }
-			catch { }
 			Transaction = null;
 		}
 
