@@ -10,6 +10,7 @@ namespace Dupper
 		T? Connection { get; }
 
 		T GetConnectionOrConnect(bool switchToNewConnection = false);
+		T GetConnectionOrConnect(string connectionString, bool switchToNewConnection = false);
 		T Connect(string connectionString, bool switchToNewConnection = false);
 		T Connect(bool switchToNewConnection = false);
 		IDbTransaction BeginTransaction();

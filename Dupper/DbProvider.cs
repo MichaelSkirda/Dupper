@@ -52,7 +52,14 @@ namespace Dupper
 			return Connect(switchToNewConnection);
 		}
 
-		public T Connect(bool switchToNewConnection = false)
+        public T GetConnectionOrConnect(string connectionString, bool switchToNewConnection = false)
+        {
+            if (_connection != null)
+                return _connection;
+            return Connect(connectionString, switchToNewConnection);
+        }
+
+        public T Connect(bool switchToNewConnection = false)
 		{
 			WaitMutex(MutexMillisecondsTimeout);
 
