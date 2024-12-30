@@ -161,22 +161,19 @@ namespace Dupper
 		#region Transactions
 
 		public IDbTransaction BeginTransaction()
-		{
-			if (Transaction != null)
-				throw new InvalidOperationException(ExceptionMessages.TransactionAlreadyStarted);
-			IDbConnection connection = GetConnectionOrConnect();
-			IDbTransaction transaction = connection.BeginTransaction();
-			Transaction = transaction;
-			return transaction;
-		}
+			=> BeginTransactionPrivate(null);
 
-		public IDbTransaction BeginTransaction(IsolationLevel il)
+        public IDbTransaction BeginTransaction(IsolationLevel il)
+            => BeginTransactionPrivate(il);
+
+        private IDbTransaction BeginTransactionPrivate(IsolationLevel? il)
 		{
 			if (Transaction != null)
 				throw new InvalidOperationException(ExceptionMessages.TransactionAlreadyStarted);
+
 			IDbConnection connection = GetConnectionOrConnect();
-			IDbTransaction transaction = connection.BeginTransaction(il);
-			Transaction = transaction;
+			IDbTransaction transaction = il == null ? connection.BeginTransaction() : connection.BeginTransaction(il.Value);
+            Transaction = transaction;
 			return transaction;
 		}
 
